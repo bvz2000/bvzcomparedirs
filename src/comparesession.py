@@ -168,7 +168,7 @@ class Session(object):
 
         count = 0
 
-        for file_path, metadata in self.query_scan.files.items():
+        for file_p, metadata in self.query_scan.files.items():
 
             count += 1
             yield count
@@ -212,41 +212,41 @@ class Session(object):
                                                                     mtime=mtime)
 
             if len(possible_matches) == 0:
-                self.add_unique(file_path)
+                self.add_unique(file_p)
                 continue
 
             match = False
-            for possible_match in possible_matches:
+            for possible_match_p in possible_matches:
 
-                if file_path == possible_match:  # Do not want to compare a file to itself - that is not a duplicate.
+                if file_p == possible_match_p:  # Do not want to compare a file to itself - that is not a duplicate.
                     continue
 
                 if skip_checksum:
                     match = True
-                    self.append_match(file_path, possible_match)
+                    self.append_match(file_p, possible_match_p)
                     continue
 
-                possible_match_checksum = self.canonical_scan.get_checksum(possible_match)
+                possible_match_checksum = self.canonical_scan.get_checksum(possible_match_p)
 
                 if possible_match_checksum is not None:
                     self.pre_computed_checksum_count += 1
 
                 try:
-                    checksum = comparefiles.compare(file_a_path=file_path,
-                                                    file_b_path=possible_match,
+                    checksum = comparefiles.compare(file_a_path=file_p,
+                                                    file_b_path=possible_match_p,
                                                     file_b_checksum=possible_match_checksum,
                                                     single_pass=True)
                 except AssertionError:
-                    if not os.path.exists(file_path):
-                        self.source_error_files.add(file_path)
-                    if not os.path.exists(possible_match):
-                        self.possible_match_error_files.add(possible_match)
+                    if not os.path.exists(file_p):
+                        self.source_error_files.add(file_p)
+                    if not os.path.exists(possible_match_p):
+                        self.possible_match_error_files.add(possible_match_p)
                     continue
 
                 if checksum:
                     match = True
-                    self.canonical_scan.checksum[possible_match] = checksum
-                    self.append_match(file_path, possible_match)
+                    self.canonical_scan.checksum[possible_match_p] = checksum
+                    self.append_match(file_p, possible_match_p)
 
             if not match:
-                self.add_unique(file_path)
+                self.add_unique(file_p)
