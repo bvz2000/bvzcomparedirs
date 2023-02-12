@@ -120,6 +120,24 @@ class Session(object):
         self.unique.add(file_p)
 
     # ------------------------------------------------------------------------------------------------------------------
+    def append_match(self,
+                     file_p,
+                     match_p):
+        """
+        Appends the possible match to the list of actual matches.
+
+        :param file_p: The full path to the file in the canonical dir.
+        :param match_p: The full path to the file in the query dir that matches the file_p.
+
+        :return: Nothing.
+        """
+
+        try:
+            self.actual_matches[file_p].append(match_p)
+        except KeyError:
+            self.actual_matches[file_p] = [match_p]
+
+    # ------------------------------------------------------------------------------------------------------------------
     def do_compare(self,
                    name=False,
                    file_type=False,
@@ -205,11 +223,7 @@ class Session(object):
 
                 if skip_checksum:
                     match = True
-                    # TODO: Break this out into a separate function (same as below)
-                    try:
-                        self.actual_matches[file_path].append(possible_match)
-                    except KeyError:
-                        self.actual_matches[file_path] = [possible_match]
+                    self.append_match(file_path, possible_match)
                     continue
 
                 possible_match_checksum = self.canonical_scan.get_checksum(possible_match)
@@ -230,13 +244,9 @@ class Session(object):
                     continue
 
                 if checksum:
-                    # TODO: Break this out into a separate function (same as above)
                     match = True
                     self.canonical_scan.checksum[possible_match] = checksum
-                    try:
-                        self.actual_matches[file_path].append(possible_match)
-                    except KeyError:
-                        self.actual_matches[file_path] = [possible_match]
+                    self.append_match(file_path, possible_match)
 
             if not match:
                 self.add_unique(file_path)
