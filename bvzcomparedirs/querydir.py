@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-from scandir import ScanDir
+from . scandir import ScanDir
 
 
 class QueryDir(ScanDir):
