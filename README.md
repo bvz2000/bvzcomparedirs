@@ -44,7 +44,8 @@ for counter in session_obj.do_query_scan():
 for counter in session_obj.do_canonical_scan():
     print(f"scanned (counter} canonical files")
     
-# Run the comparison, names and parent directory names must match.
+# Run the comparison, names and parent directory names must match. Do an md5 checksum to
+# ensure the contents of both files are identical.
 for counter in session_obj.do_compare(name=True,
                                       file_type=False,
                                       parent=True,
