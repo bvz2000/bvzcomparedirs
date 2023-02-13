@@ -2,10 +2,10 @@
 
 import os.path
 
-from canonicaldir import CanonicalDir
-from querydir import QueryDir
+from . canonicaldir import CanonicalDir
+from . querydir import QueryDir
 
-import comparefiles
+from . import comparefiles
 
 
 class Session(object):
@@ -62,6 +62,7 @@ class Session(object):
 
         self.actual_matches = dict()
         self.unique = set()
+        self.skipped_self = set()
 
         self.source_error_files = set()
         self.possible_match_error_files = set()
@@ -216,9 +217,12 @@ class Session(object):
                 continue
 
             match = False
+            skip = False
             for possible_match_p in possible_matches:
 
                 if file_p == possible_match_p:  # Do not want to compare a file to itself - that is not a duplicate.
+                    skip = True
+                    self.skipped_self.add(file_p)
                     continue
 
                 if skip_checksum:
@@ -249,4 +253,5 @@ class Session(object):
                     self.append_match(file_p, possible_match_p)
 
             if not match:
-                self.add_unique(file_p)
+                if not skip or (skip and len(possible_matches) > 1):
+                    self.add_unique(file_p)
