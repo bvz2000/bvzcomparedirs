@@ -20,7 +20,7 @@ Future features:
 The following is a very simplified example of using this library.
 
 ```
-from comparesession import Session
+from bvzcomparedirs.comparesession import Session
 
 # Create a comparison session object, and hand it the query and canonical
 # directory paths. Descend into subdirectories, but skip hidden files and
@@ -42,7 +42,7 @@ for counter in session_obj.do_query_scan():
     print(f"scanned {counter} query files")
     
 for counter in session_obj.do_canonical_scan():
-    print(f"scanned (counter} canonical files")
+    print(f"scanned {counter} canonical files")
     
 # Run the comparison, names and parent directory names must match. Do an md5 checksum to
 # ensure the contents of both files are identical.
