@@ -153,15 +153,15 @@ class ScanDir(object):
                 self.file_generic_err_files.add(exception_obj.filename)
 
     # ------------------------------------------------------------------------------------------------------------------
-    def scan(self,
-             skip_sub_dir=False,
-             skip_hidden=False,
-             skip_zero_len=True,
-             incl_dir_regexes=None,
-             excl_dir_regexes=None,
-             incl_file_regexes=None,
-             excl_file_regexes=None,
-             report_frequency=1000):
+    def scan_dir(self,
+                 skip_sub_dir=False,
+                 skip_hidden=False,
+                 skip_zero_len=True,
+                 incl_dir_regexes=None,
+                 excl_dir_regexes=None,
+                 incl_file_regexes=None,
+                 excl_file_regexes=None,
+                 report_frequency=1000):
         """
         Triggers a scan of the directory.
 
@@ -199,81 +199,31 @@ class ScanDir(object):
 
         for root, sub_folders, files_n in os.walk(self.scan_dir, onerror=self.os_walk_error):
 
-            path_items = [item for item in root.split(os.path.sep) if item != ""]
+            files_p = [os.path.join(root, file_n) for file_n in files_n]
 
-            for file_n in files_n:
+            for checked_count in self.scan_files(files_p=files_p,
+                                                 skip_hidden=skip_hidden,
+                                                 skip_zero_len=skip_zero_len,
+                                                 incl_dir_regexes=incl_dir_regexes,
+                                                 excl_dir_regexes=excl_dir_regexes,
+                                                 incl_file_regexes=incl_file_regexes,
+                                                 excl_file_regexes=excl_file_regexes,
+                                                 report_frequency=report_frequency):
+                yield checked_count
 
-                self.checked_count += 1
-
-                file_p = os.path.join(root, file_n)
-
-                # This needs to come before testing access, because a link always fails the os.R_OK test
-                if os.path.islink(file_p):
-                    self.skipped_links += 1
-                    continue
-
-                if not os.access(file_p, os.R_OK):
-                    self.error_count += 1
-                    self.file_permission_err_files.add(file_p)
-                    continue
-
-                if self.checked_count % report_frequency == 0:
-                    yield self.checked_count
-
-                if skip_hidden and file_n[0] == ".":
-                    self.skipped_hidden += 1
-                    continue
-
-                if incl_dir_regexes:
-                    if not self.match_regex(regexes=incl_dir_regexes, items=path_items):
-                        self.skipped_include += 1
-                        continue
-
-                if excl_dir_regexes is not None:
-                    if self.match_regex(regexes=excl_dir_regexes, items=path_items):
-                        self.skipped_exclude += 1
-                        continue
-
-                if incl_file_regexes is not None:
-                    if not self.match_regex(regexes=incl_file_regexes, items=[file_n]):
-                        self.skipped_include += 1
-                        continue
-
-                if excl_file_regexes is not None:
-                    if self.match_regex(regexes=excl_file_regexes, items=[file_n]):
-                        self.skipped_exclude += 1
-                        continue
-
-                try:
-                    file_size = os.path.getsize(file_p)
-                except FileNotFoundError:
-                    self.file_not_found_err_files.add(file_p)
-                    self.error_count += 1
-                    continue
-
-                if skip_zero_len:
-                    if file_size == 0:
-                        self.skipped_zero_len += 1
-                        continue
-
-                self.initial_count += 1
-
-                file_metadata = self.get_metadata(file_p)
-
-                self._append_to_scan(file_path=file_p,
-                                     metadata=file_metadata)
-
-                if skip_sub_dir:
-                    sub_folders[:] = []
+            if skip_sub_dir:
+                sub_folders[:] = []
 
     # ------------------------------------------------------------------------------------------------------------------
-    def set_files(self,
-                  files_p,
-                  skip_hidden=False,
-                  skip_zero_len=True,
-                  incl_file_regexes=None,
-                  excl_file_regexes=None,
-                  report_frequency=1000):
+    def scan_files(self,
+                   files_p,
+                   skip_hidden=False,
+                   skip_zero_len=True,
+                   incl_dir_regexes=None,
+                   excl_dir_regexes=None,
+                   incl_file_regexes=None,
+                   excl_file_regexes=None,
+                   report_frequency=1000):
         """
         Use a specific list of files instead of scanning a directory for files.
 
@@ -283,6 +233,12 @@ class ScanDir(object):
                If True, then hidden files will be ignored in the scan. Defaults to False.
         :param skip_zero_len:
                If True, then files of zero length will be skipped. Defaults to True.
+        :param incl_dir_regexes:
+               A regular expression (or list of regular expressions) to filter matching directories. Only those that
+               match this regex will be INCLUDED. If None, no filtering will be done. Defaults to None.
+        :param excl_dir_regexes:
+               A regular expression (or list of regular expressions) to filter matching directories. Those that match
+               this regex will be EXCLUDED. If None, no filtering will be done. Defaults to None.
         :param incl_file_regexes:
                A regular expression (or list of regular expressions) to filter matching files. Only those that match
                this regex will be INCLUDED. If None, no filtering will be done. Defaults to None.
@@ -301,7 +257,10 @@ class ScanDir(object):
 
         for file_p in files_p:
 
-            file_n = os.path.split(file_p)[1]
+            self.checked_count += 1
+
+            file_d, file_n = os.path.split(file_p)
+            path_items = [item for item in file_d.split(os.path.sep) if item != ""]
 
             # This needs to come before testing access, because a link always fails the os.R_OK test
             if os.path.islink(file_p):
@@ -319,6 +278,26 @@ class ScanDir(object):
             if skip_hidden and file_n[0] == ".":
                 self.skipped_hidden += 1
                 continue
+
+            if incl_dir_regexes:
+                if not self.match_regex(regexes=incl_dir_regexes, items=path_items):
+                    self.skipped_include += 1
+                    continue
+
+            if excl_dir_regexes is not None:
+                if self.match_regex(regexes=excl_dir_regexes, items=path_items):
+                    self.skipped_exclude += 1
+                    continue
+
+            if incl_file_regexes is not None:
+                if not self.match_regex(regexes=incl_file_regexes, items=[file_n]):
+                    self.skipped_include += 1
+                    continue
+
+            if excl_file_regexes is not None:
+                if self.match_regex(regexes=excl_file_regexes, items=[file_n]):
+                    self.skipped_exclude += 1
+                    continue
 
             try:
                 file_size = os.path.getsize(file_p)
