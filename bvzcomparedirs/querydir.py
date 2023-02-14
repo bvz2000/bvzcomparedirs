@@ -12,7 +12,8 @@ class QueryDir(ScanDir):
     def __init__(self,
                  scan_dir):
         """
-        :param scan_dir: The directory to scan.
+        :param scan_dir:
+               The directory to scan.
         """
         super().__init__(scan_dir=scan_dir)
 
@@ -25,8 +26,10 @@ class QueryDir(ScanDir):
         """
         Appends a new file to the scan dictionary.
 
-        :param file_path: The path to the file to add
-        :param metadata: The metadata for this file.
+        :param file_path:
+               The path to the file to add
+        :param metadata:
+               The metadata for this file.
 
         :return: Nothing.
         """
