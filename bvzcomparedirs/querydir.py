@@ -9,13 +9,10 @@ class QueryDir(ScanDir):
     """
 
     # ------------------------------------------------------------------------------------------------------------------
-    def __init__(self,
-                 scan_dir):
+    def __init__(self):
         """
-        :param scan_dir:
-               The directory to scan.
         """
-        super().__init__(scan_dir=scan_dir)
+        super().__init__()
 
         self.files = dict()
 

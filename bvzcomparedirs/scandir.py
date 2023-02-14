@@ -13,25 +13,11 @@ class ScanDir(object):
     """
 
     # ------------------------------------------------------------------------------------------------------------------
-    def __init__(self,
-                 scan_dir):
+    def __init__(self):
         """
-        :param scan_dir:
-               The directory to scan.
         """
 
-        assert type(scan_dir) is str
-
-        if not scan_dir:
-            raise IOError("No directory has been set to scan.")
-
-        if not os.path.exists(scan_dir):
-            raise IOError(f"The directory {scan_dir} does not exist")
-
-        if not os.path.isdir(scan_dir):
-            raise IOError(f"The path {scan_dir} is not a directory")
-
-        self.scan_dir = scan_dir
+        self.scan_dir = None
 
         self.dir_permission_err_files = set()
         self.dir_generic_err_files = set()
@@ -153,18 +139,21 @@ class ScanDir(object):
                 self.file_generic_err_files.add(exception_obj.filename)
 
     # ------------------------------------------------------------------------------------------------------------------
-    def scan_dir(self,
-                 skip_sub_dir=False,
-                 skip_hidden=False,
-                 skip_zero_len=True,
-                 incl_dir_regexes=None,
-                 excl_dir_regexes=None,
-                 incl_file_regexes=None,
-                 excl_file_regexes=None,
-                 report_frequency=1000):
+    def scan_directory(self,
+                       scan_dir,
+                       skip_sub_dir=False,
+                       skip_hidden=False,
+                       skip_zero_len=True,
+                       incl_dir_regexes=None,
+                       excl_dir_regexes=None,
+                       incl_file_regexes=None,
+                       excl_file_regexes=None,
+                       report_frequency=1000):
         """
-        Triggers a scan of the directory.
+        Scan an entire directory and store the metadata for every file (optionally include subdirectories).
 
+        :param scan_dir:
+               A full path to the directory to scan.
         :param skip_sub_dir:
                If True, then no subdirectories will be included (only the top-level directory will be scanned). Defaults
                to False.
@@ -191,6 +180,19 @@ class ScanDir(object):
 
         :return: Nothing.
         """
+
+        assert type(scan_dir) is str
+
+        if not scan_dir:
+            raise IOError("No directory has been set to scan.")
+
+        if not os.path.exists(scan_dir):
+            raise IOError(f"The directory {scan_dir} does not exist")
+
+        if not os.path.isdir(scan_dir):
+            raise IOError(f"The path {scan_dir} is not a directory")
+
+        self.scan_dir = scan_dir
 
         incl_dir_regexes = self.parameter_to_list(incl_dir_regexes)
         excl_dir_regexes = self.parameter_to_list(excl_dir_regexes)
@@ -225,7 +227,7 @@ class ScanDir(object):
                    excl_file_regexes=None,
                    report_frequency=1000):
         """
-        Use a specific list of files instead of scanning a directory for files.
+        Scan a specific list of files and store the metadata for every file.
 
         :param files_p:
                A list of files (with full paths).
