@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
 
-from . scandir import ScanDir
+from . scanfiles import ScanFiles
 
 
-class QueryDir(ScanDir):
+class QueryFiles(ScanFiles):
     """
-    A class to scan and store the attributes of every file in a Query directory.
+    A class to scan and store the attributes of a list of query files.
     """
 
     # ------------------------------------------------------------------------------------------------------------------

@@ -2,8 +2,8 @@
 
 import os.path
 
-from . canonicaldir import CanonicalDir
-from . querydir import QueryDir
+from . canonicalfiles import CanonicalFiles
+from . queryfiles import QueryFiles
 
 from . import comparefiles
 
@@ -77,7 +77,7 @@ class Session(object):
         :return: Nothing.
         """
 
-        self.query_scan = QueryDir()
+        self.query_scan = QueryFiles()
         for file_count in self.query_scan.scan_directory(scan_dir=self.query_dir,
                                                          skip_sub_dir=self.skip_sub_dir,
                                                          skip_hidden=self.skip_hidden,
@@ -97,7 +97,7 @@ class Session(object):
         :return: Nothing.
         """
 
-        self.canonical_scan = CanonicalDir()
+        self.canonical_scan = CanonicalFiles()
         for file_count in self.canonical_scan.scan_directory(scan_dir=self.canonical_dir,
                                                              skip_sub_dir=self.skip_sub_dir,
                                                              skip_hidden=self.skip_hidden,
@@ -232,7 +232,7 @@ class Session(object):
                     self.append_match(file_p, possible_match_p)
                     continue
 
-                possible_match_checksum = self.canonical_scan.get_checksum(possible_match_p)
+                possible_match_checksum = self.canonical_scan._get_checksum(possible_match_p)
 
                 if possible_match_checksum is not None:
                     self.pre_computed_checksum_count += 1

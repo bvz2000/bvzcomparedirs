@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
 
-from . scandir import ScanDir
+from . scanfiles import ScanFiles
 
 
-class CanonicalDir(ScanDir):
+class CanonicalFiles(ScanFiles):
     """
-    A class to scan and store the attributes of every file in a single directory.
+    A class to scan and store the attributes of the canonical list of files.
     """
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -159,8 +159,8 @@ class CanonicalDir(ScanDir):
         return intersection
 
     # ------------------------------------------------------------------------------------------------------------------
-    def get_checksum(self,
-                     file_path):
+    def _get_checksum(self,
+                      file_path):
         """
         Tries to load the checksum from the checksum dictionary. If there is no checksum available, returns None.
 

@@ -5,7 +5,7 @@ import os.path
 import re
 
 
-class ScanDir(object):
+class ScanFiles(object):
     """
     A class to scan and store the attributes of every file in a single directory. Alternately has the ability to work
     with an arbitrary list of files instead of a scanned directory. This class should be subclassed and not used
@@ -35,8 +35,8 @@ class ScanDir(object):
         self.skipped_include = 0
 
     # ------------------------------------------------------------------------------------------------------------------
-    def get_metadata(self,
-                     file_path):
+    def _get_metadata(self,
+                      file_path):
         """
         Gets the metadata for the given file path.
 
@@ -71,7 +71,7 @@ class ScanDir(object):
 
     # ------------------------------------------------------------------------------------------------------------------
     @staticmethod
-    def parameter_to_list(param_value):
+    def _parameter_to_list(param_value):
         """
         Given a parameter (param_value) checks to see if it is a list or None. If so, the parameter is returned
         unchanged. If it is not a list and is not None, param_value is embedded in a list and that list is returned.
@@ -93,8 +93,8 @@ class ScanDir(object):
 
     # ------------------------------------------------------------------------------------------------------------------
     @staticmethod
-    def match_regex(regexes,
-                    items):
+    def _match_regex(regexes,
+                     items):
         """
         Given a list of regex expressions and a list of items, returns True if any of the items match any of the regex
         expressions.
@@ -114,8 +114,8 @@ class ScanDir(object):
         return False
 
     # ------------------------------------------------------------------------------------------------------------------
-    def os_walk_error(self,
-                      exception_obj):
+    def _os_walk_error(self,
+                       exception_obj):
         """
         Handle errors during the os.walk scan of the dir
 
@@ -194,12 +194,12 @@ class ScanDir(object):
 
         self.scan_dir = scan_dir
 
-        incl_dir_regexes = self.parameter_to_list(incl_dir_regexes)
-        excl_dir_regexes = self.parameter_to_list(excl_dir_regexes)
-        incl_file_regexes = self.parameter_to_list(incl_file_regexes)
-        excl_file_regexes = self.parameter_to_list(excl_file_regexes)
+        incl_dir_regexes = self._parameter_to_list(incl_dir_regexes)
+        excl_dir_regexes = self._parameter_to_list(excl_dir_regexes)
+        incl_file_regexes = self._parameter_to_list(incl_file_regexes)
+        excl_file_regexes = self._parameter_to_list(excl_file_regexes)
 
-        for root, sub_folders, files_n in os.walk(self.scan_dir, onerror=self.os_walk_error):
+        for root, sub_folders, files_n in os.walk(self.scan_dir, onerror=self._os_walk_error):
 
             files_p = [os.path.join(root, file_n) for file_n in files_n]
 
@@ -282,22 +282,22 @@ class ScanDir(object):
                 continue
 
             if incl_dir_regexes:
-                if not self.match_regex(regexes=incl_dir_regexes, items=path_items):
+                if not self._match_regex(regexes=incl_dir_regexes, items=path_items):
                     self.skipped_include += 1
                     continue
 
             if excl_dir_regexes is not None:
-                if self.match_regex(regexes=excl_dir_regexes, items=path_items):
+                if self._match_regex(regexes=excl_dir_regexes, items=path_items):
                     self.skipped_exclude += 1
                     continue
 
             if incl_file_regexes is not None:
-                if not self.match_regex(regexes=incl_file_regexes, items=[file_n]):
+                if not self._match_regex(regexes=incl_file_regexes, items=[file_n]):
                     self.skipped_include += 1
                     continue
 
             if excl_file_regexes is not None:
-                if self.match_regex(regexes=excl_file_regexes, items=[file_n]):
+                if self._match_regex(regexes=excl_file_regexes, items=[file_n]):
                     self.skipped_exclude += 1
                     continue
 
@@ -315,7 +315,7 @@ class ScanDir(object):
 
             self.initial_count += 1
 
-            file_metadata = self.get_metadata(file_p)
+            file_metadata = self._get_metadata(file_p)
 
             self._append_to_scan(file_path=file_p,
                                  metadata=file_metadata)
