@@ -203,15 +203,15 @@ class ScanFiles(object):
 
             files_p = [os.path.join(root, file_n) for file_n in files_n]
 
-            for checked_count in self.scan_files(files_p=files_p,
-                                                 skip_hidden=skip_hidden,
-                                                 skip_zero_len=skip_zero_len,
-                                                 incl_dir_regexes=incl_dir_regexes,
-                                                 excl_dir_regexes=excl_dir_regexes,
-                                                 incl_file_regexes=incl_file_regexes,
-                                                 excl_file_regexes=excl_file_regexes,
-                                                 report_frequency=report_frequency):
-                yield checked_count
+            for _ in self.scan_files(files_p=files_p,
+                                     skip_hidden=skip_hidden,
+                                     skip_zero_len=skip_zero_len,
+                                     incl_dir_regexes=incl_dir_regexes,
+                                     excl_dir_regexes=excl_dir_regexes,
+                                     incl_file_regexes=incl_file_regexes,
+                                     excl_file_regexes=excl_file_regexes,
+                                     report_frequency=report_frequency):
+                yield self.checked_count
 
             if skip_sub_dir:
                 sub_folders[:] = []
