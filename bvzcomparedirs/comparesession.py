@@ -15,7 +15,7 @@ class Session(object):
 
     # ------------------------------------------------------------------------------------------------------------------
     def __init__(self,
-                 query_dir,
+                 query_items,
                  canonical_dir,
                  skip_sub_dir=False,
                  skip_hidden=False,
@@ -28,28 +28,49 @@ class Session(object):
         """
         Init.
 
-        :param query_dir: The full query directory path.
-        :param canonical_dir: The full canonical directory path.
-        :param skip_sub_dir: If True, then no subdirectories will be included (only the top-level directory will be
-               scanned). Defaults to False.
-        :param skip_hidden: If True, then hidden files will be ignored in the scan. Defaults to False.
-        :param skip_zero_len: If True, then files of zero length will be skipped. Defaults to True.
-        :param incl_dir_regex: A regular expression to filter matching directories. Only those that match this regex
-               will be INCLUDED. If None, no filtering will be done. Defaults to None.
-        :param excl_dir_regex: A regular expression to filter matching directories. Those that match this regex
-               will be EXCLUDED. If None, no filtering will be done. Defaults to None.
-        :param incl_file_regex: A regular expression to filter matching files. Only those that match this regex
-               will be INCLUDED. If None, no filtering will be done. Defaults to None.
-        :param excl_file_regex: A regular expression to filter matching files. Those that match this regex
-               will be EXCLUDED. If None, no filtering will be done. Defaults to None.
-        :param report_frequency: How many files to scan before reporting back a count of scanned files to the calling
-               function.
+        :param query_items:
+               A list, set, or tuple of query directories or files (must include the full path). Also accepts a single,
+               (non-list, set, or tuple) path.
+        :param canonical_dir:
+               The full canonical directory path.
+        :param skip_sub_dir:
+               If True, then no subdirectories will be included (only the top-level directory will be scanned). Defaults
+               to False.
+        :param skip_hidden:
+               If True, then hidden files will be ignored in the scan. Defaults to False.
+        :param skip_zero_len:
+               If True, then files of zero length will be skipped. Defaults to True.
+        :param incl_dir_regex:
+               A regular expression to filter matching directories. Only those that match this regex will be INCLUDED.
+               If None, no filtering will be done. Defaults to None.
+        :param excl_dir_regex:
+               A regular expression to filter matching directories. Those that match this regex will be EXCLUDED. If
+               None, no filtering will be done. Defaults to None.
+        :param incl_file_regex:
+               A regular expression to filter matching files. Only those that match this regex will be INCLUDED. If
+               None, no filtering will be done. Defaults to None.
+        :param excl_file_regex:
+               A regular expression to filter matching files. Those that match this regex will be EXCLUDED. If None, no
+               filtering will be done. Defaults to None.
+        :param report_frequency:
+               How many files to scan before reporting back a count of scanned files to the calling function.
         """
 
-        self.canonical_scan = None
-        self.query_scan = None
+        assert type(query_items) in [list, set, tuple, str]
+        assert type(canonical_dir) is str
+        assert type(skip_sub_dir) is bool
+        assert type(skip_hidden) is bool
+        assert type(skip_zero_len) is bool
+        assert incl_dir_regex is None or type(incl_dir_regex) is str
+        assert excl_dir_regex is None or type(excl_dir_regex) is str
+        assert incl_file_regex is None or type(incl_file_regex) is str
+        assert excl_file_regex is None or type(excl_file_regex) is str
+        assert type(report_frequency) is int
 
-        self.query_dir = query_dir
+        self.canonical_scan = CanonicalFiles()
+        self.query_scan = QueryFiles()
+
+        self.query_items = query_items
         self.canonical_dir = canonical_dir
         self.skip_sub_dir = skip_sub_dir
         self.skip_hidden = skip_hidden
@@ -72,22 +93,38 @@ class Session(object):
     # ------------------------------------------------------------------------------------------------------------------
     def do_query_scan(self):
         """
-        Execute the query scan.
+        Execute the query scan on the list of files or directories.
 
         :return: Nothing.
         """
 
-        self.query_scan = QueryFiles()
-        for file_count in self.query_scan.scan_directory(scan_dir=self.query_dir,
-                                                         skip_sub_dir=self.skip_sub_dir,
-                                                         skip_hidden=self.skip_hidden,
-                                                         skip_zero_len=self.skip_zero_len,
-                                                         incl_dir_regexes=self.incl_dir_regex,
-                                                         excl_dir_regexes=self.excl_dir_regex,
-                                                         incl_file_regexes=self.incl_file_regex,
-                                                         excl_file_regexes=self.excl_file_regex,
-                                                         report_frequency=self.report_frequency):
-            yield file_count
+        if type(self.query_items) not in [list, set, tuple]:
+            self.query_items = [self.query_items]
+
+        for item_no, query_item in enumerate(self.query_items):
+
+            if os.path.exists(query_item) and os.path.isdir(query_item):
+                for file_count in self.query_scan.scan_directory(scan_dir=query_item,
+                                                                 skip_sub_dir=self.skip_sub_dir,
+                                                                 skip_hidden=self.skip_hidden,
+                                                                 skip_zero_len=self.skip_zero_len,
+                                                                 incl_dir_regexes=self.incl_dir_regex,
+                                                                 excl_dir_regexes=self.excl_dir_regex,
+                                                                 incl_file_regexes=self.incl_file_regex,
+                                                                 excl_file_regexes=self.excl_file_regex,
+                                                                 report_frequency=self.report_frequency):
+                    yield file_count
+
+            if os.path.exists(query_item) and not os.path.isdir(query_item):
+                for file_count in self.query_scan.scan_files(files_p=query_item,
+                                                             skip_hidden=self.skip_hidden,
+                                                             skip_zero_len=self.skip_zero_len,
+                                                             incl_dir_regexes=self.incl_dir_regex,
+                                                             excl_dir_regexes=self.excl_dir_regex,
+                                                             incl_file_regexes=self.incl_file_regex,
+                                                             excl_file_regexes=self.excl_file_regex,
+                                                             report_frequency=self.report_frequency):
+                    yield file_count
 
     # ------------------------------------------------------------------------------------------------------------------
     def do_canonical_scan(self):
@@ -97,7 +134,6 @@ class Session(object):
         :return: Nothing.
         """
 
-        self.canonical_scan = CanonicalFiles()
         for file_count in self.canonical_scan.scan_directory(scan_dir=self.canonical_dir,
                                                              skip_sub_dir=self.skip_sub_dir,
                                                              skip_hidden=self.skip_hidden,
