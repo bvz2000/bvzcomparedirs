@@ -3,6 +3,7 @@
 import os.path
 
 from . canonicalfiles import CanonicalFiles
+from . options import Options
 from . queryfiles import QueryFiles
 
 from . import comparefiles
@@ -20,17 +21,15 @@ class Session(object):
                  skip_sub_dir=False,
                  skip_hidden=False,
                  skip_zero_len=True,
-                 incl_dir_regex=None,
-                 excl_dir_regex=None,
-                 incl_file_regex=None,
-                 excl_file_regex=None,
-                 report_frequency=1000):
+                 incl_dir_regexes=None,
+                 excl_dir_regexes=None,
+                 incl_file_regexes=None,
+                 excl_file_regexes=None,
+                 report_frequency=10):
         """
-        Init.
-
         :param query_items:
-               A list, set, or tuple of query directories or files (must include the full path). Also accepts a single,
-               (non-list, set, or tuple) path.
+               A list of query directories or files (must include the full path). Also accepts: a set, a tuple, as well
+               as a single string containing a single path.
         :param canonical_dir:
                The full canonical directory path.
         :param skip_sub_dir:
@@ -40,20 +39,25 @@ class Session(object):
                If True, then hidden files will be ignored in the scan. Defaults to False.
         :param skip_zero_len:
                If True, then files of zero length will be skipped. Defaults to True.
-        :param incl_dir_regex:
-               A regular expression to filter matching directories. Only those that match this regex will be INCLUDED.
-               If None, no filtering will be done. Defaults to None.
-        :param excl_dir_regex:
-               A regular expression to filter matching directories. Those that match this regex will be EXCLUDED. If
-               None, no filtering will be done. Defaults to None.
-        :param incl_file_regex:
-               A regular expression to filter matching files. Only those that match this regex will be INCLUDED. If
-               None, no filtering will be done. Defaults to None.
-        :param excl_file_regex:
-               A regular expression to filter matching files. Those that match this regex will be EXCLUDED. If None, no
+        :param incl_dir_regexes:
+               A list of regular expressions to filter matching directories. Only those that match any of these regexes
+               will be INCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None,
+               no filtering will be done. Defaults to None.
+        :param excl_dir_regexes:
+               A list of regular expressions to filter matching directories. Those that match any of these regexes will
+               be EXCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None, no
+               filtering will be done. Defaults to None.
+        :param incl_file_regexes:
+               A list of regular expressions to filter matching files. Only those that match any of these regexes will
+               be INCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None, no
+               filtering will be done. Defaults to None.
+        :param excl_file_regexes:
+               A list of regular expressions to filter matching files. Those that match any of these regexes will be
+               EXCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None, no
                filtering will be done. Defaults to None.
         :param report_frequency:
-               How many files to scan before reporting back a count of scanned files to the calling function.
+               How many files to scan before reporting back a count of scanned files to the calling function. Defaults
+               to 10.
         """
 
         assert type(query_items) in [list, set, tuple, str]
@@ -61,25 +65,26 @@ class Session(object):
         assert type(skip_sub_dir) is bool
         assert type(skip_hidden) is bool
         assert type(skip_zero_len) is bool
-        assert incl_dir_regex is None or type(incl_dir_regex) is str
-        assert excl_dir_regex is None or type(excl_dir_regex) is str
-        assert incl_file_regex is None or type(incl_file_regex) is str
-        assert excl_file_regex is None or type(excl_file_regex) is str
+        assert incl_dir_regexes is None or type(incl_dir_regexes) in [list, set, tuple, str]
+        assert excl_dir_regexes is None or type(excl_dir_regexes) in [list, set, tuple, str]
+        assert incl_file_regexes is None or type(incl_file_regexes) in [list, set, tuple, str]
+        assert excl_file_regexes is None or type(excl_file_regexes) in [list, set, tuple, str]
         assert type(report_frequency) is int
 
-        self.canonical_scan = CanonicalFiles()
-        self.query_scan = QueryFiles()
+        options = Options(skip_sub_dir=skip_sub_dir,
+                          skip_hidden=skip_hidden,
+                          skip_zero_len=skip_zero_len,
+                          incl_dir_regexes=self._parameter_to_list(incl_dir_regexes),
+                          excl_dir_regexes=self._parameter_to_list(excl_dir_regexes),
+                          incl_file_regexes=self._parameter_to_list(incl_file_regexes),
+                          excl_file_regexes=self._parameter_to_list(excl_file_regexes),
+                          report_frequency=report_frequency)
 
-        self.query_items = query_items
+        self.canonical_scan = CanonicalFiles(options)
+        self.query_scan = QueryFiles(options)
+
+        self.query_items = self._parameter_to_list(query_items)
         self.canonical_dir = canonical_dir
-        self.skip_sub_dir = skip_sub_dir
-        self.skip_hidden = skip_hidden
-        self.skip_zero_len = skip_zero_len
-        self.incl_dir_regex = incl_dir_regex
-        self.excl_dir_regex = excl_dir_regex
-        self.incl_file_regex = incl_file_regex
-        self.excl_file_regex = excl_file_regex
-        self.report_frequency = report_frequency
 
         self.actual_matches = dict()
         self.unique = set()
@@ -91,6 +96,28 @@ class Session(object):
         self.pre_computed_checksum_count = 0
 
     # ------------------------------------------------------------------------------------------------------------------
+    @staticmethod
+    def _parameter_to_list(param_value):
+        """
+        Given a parameter (param_value) checks to see if it is a list or None. If so, the parameter is returned
+        unchanged. If it is not a list and is not None, param_value is embedded in a list and that list is returned.
+
+        :param param_value:
+               The parameter value that is to be turned into a list if it is not already a list.
+
+        :return: The param_value embedded in a list. If param_value is already a list or is None, returns param_value
+                 unchanged.
+        """
+
+        if param_value is None:
+            return None
+
+        if type(param_value) in [list, set, tuple]:
+            return param_value
+
+        return [param_value]
+
+    # ------------------------------------------------------------------------------------------------------------------
     def do_query_scan(self):
         """
         Execute the query scan on the list of files or directories.
@@ -98,33 +125,20 @@ class Session(object):
         :return: Nothing.
         """
 
-        if type(self.query_items) not in [list, set, tuple]:
-            self.query_items = [self.query_items]
+        directories_p = list()
+        files_p = list()
 
-        for item_no, query_item in enumerate(self.query_items):
+        for query_item in self.query_items:
+            if os.path.isdir(query_item):
+                directories_p.append(query_item)
+            else:
+                files_p.append(query_item)
 
-            if os.path.exists(query_item) and os.path.isdir(query_item):
-                for file_count in self.query_scan.scan_directory(scan_dir=query_item,
-                                                                 skip_sub_dir=self.skip_sub_dir,
-                                                                 skip_hidden=self.skip_hidden,
-                                                                 skip_zero_len=self.skip_zero_len,
-                                                                 incl_dir_regexes=self.incl_dir_regex,
-                                                                 excl_dir_regexes=self.excl_dir_regex,
-                                                                 incl_file_regexes=self.incl_file_regex,
-                                                                 excl_file_regexes=self.excl_file_regex,
-                                                                 report_frequency=self.report_frequency):
-                    yield file_count
+        for item_count in self.query_scan.scan_directories(scan_dirs=directories_p):
+            yield item_count
 
-            if os.path.exists(query_item) and not os.path.isdir(query_item):
-                for file_count in self.query_scan.scan_files(files_p=query_item,
-                                                             skip_hidden=self.skip_hidden,
-                                                             skip_zero_len=self.skip_zero_len,
-                                                             incl_dir_regexes=self.incl_dir_regex,
-                                                             excl_dir_regexes=self.excl_dir_regex,
-                                                             incl_file_regexes=self.incl_file_regex,
-                                                             excl_file_regexes=self.excl_file_regex,
-                                                             report_frequency=self.report_frequency):
-                    yield file_count
+        for item_count in self.query_scan.scan_files(files_p=files_p):
+            yield item_count
 
     # ------------------------------------------------------------------------------------------------------------------
     def do_canonical_scan(self):
@@ -134,15 +148,7 @@ class Session(object):
         :return: Nothing.
         """
 
-        for file_count in self.canonical_scan.scan_directory(scan_dir=self.canonical_dir,
-                                                             skip_sub_dir=self.skip_sub_dir,
-                                                             skip_hidden=self.skip_hidden,
-                                                             skip_zero_len=self.skip_zero_len,
-                                                             incl_dir_regexes=self.incl_dir_regex,
-                                                             excl_dir_regexes=self.excl_dir_regex,
-                                                             incl_file_regexes=self.incl_file_regex,
-                                                             excl_file_regexes=self.excl_file_regex,
-                                                             report_frequency=self.report_frequency):
+        for file_count in self.canonical_scan.scan_directory(scan_dir=self.canonical_dir):
             yield file_count
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -268,7 +274,7 @@ class Session(object):
                     self.append_match(file_p, possible_match_p)
                     continue
 
-                possible_match_checksum = self.canonical_scan._get_checksum(possible_match_p)
+                possible_match_checksum = self.canonical_scan.get_checksum(possible_match_p)
 
                 if possible_match_checksum is not None:
                     self.pre_computed_checksum_count += 1

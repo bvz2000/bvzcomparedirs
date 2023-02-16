@@ -9,10 +9,14 @@ class CanonicalFiles(ScanFiles):
     """
 
     # ------------------------------------------------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self,
+                 options):
         """
+        :param options:
+               An options object containing the preferences for the scan parameters.
         """
-        super().__init__()
+
+        super().__init__(options)
 
         self.by_size = dict()
         self.by_name = dict()
@@ -159,8 +163,8 @@ class CanonicalFiles(ScanFiles):
         return intersection
 
     # ------------------------------------------------------------------------------------------------------------------
-    def _get_checksum(self,
-                      file_path):
+    def get_checksum(self,
+                     file_path):
         """
         Tries to load the checksum from the checksum dictionary. If there is no checksum available, returns None.
 

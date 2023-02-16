@@ -9,10 +9,14 @@ class QueryFiles(ScanFiles):
     """
 
     # ------------------------------------------------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self,
+                 options):
         """
+        :param options:
+               An options object containing the preferences for the scan parameters.
         """
-        super().__init__()
+
+        super().__init__(options)
 
         self.files = dict()
 
