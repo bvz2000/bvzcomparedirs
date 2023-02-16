@@ -11,7 +11,7 @@ from . import comparefiles
 
 class Session(object):
     """
-    A class to manage a scan and compareFolders session.
+    A class to manage a scan and compare session.
     """
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -99,8 +99,9 @@ class Session(object):
     @staticmethod
     def _parameter_to_list(param_value):
         """
-        Given a parameter (param_value) checks to see if it is a list or None. If so, the parameter is returned
-        unchanged. If it is not a list and is not None, param_value is embedded in a list and that list is returned.
+        Given a parameter (param_value) checks to see if it is a list, tuple, set, or None. If so, the parameter is
+        returned unchanged. If it is not a list and is not None, param_value is embedded in a list and that list is
+        returned.
 
         :param param_value:
                The parameter value that is to be turned into a list if it is not already a list.
@@ -120,7 +121,7 @@ class Session(object):
     # ------------------------------------------------------------------------------------------------------------------
     def do_query_scan(self):
         """
-        Execute the query scan on the list of files or directories.
+        Execute the query scan on the list of files and/or directories.
 
         :return: Nothing.
         """
@@ -157,7 +158,8 @@ class Session(object):
         """
         Adds a file path to the list of unique files.
 
-        :param file_p: The path to the unique file.
+        :param file_p:
+               The path to the unique file.
 
         :return: Nothing.
         """
@@ -171,8 +173,10 @@ class Session(object):
         """
         Appends the possible match to the list of actual matches.
 
-        :param file_p: The full path to the file in the canonical dir.
-        :param match_p: The full path to the file in the query dir that matches the file_p.
+        :param file_p:
+               The full path to the file in the canonical dir.
+        :param match_p:
+               The full path to the file in the query dir that matches the file_p.
 
         :return: Nothing.
         """
@@ -195,14 +199,21 @@ class Session(object):
         Compare query scan to canonical scan. Any attributes that are set to True will be used as part of the
         comparison. Size is always used as a comparison attribute.
 
-        :param name: If True, then also compare on name. Defaults to False.
-        :param file_type: If True, then also compare on the file type. Defaults to False.
-        :param parent: If True, then also compare on the parent directory name. Defaults to False.
-        :param rel_path: If True, then also compare on teh relative path. Defaults to False.
-        :param ctime: If True, then also compare on the creation time. Defaults to False.
-        :param mtime: If True, then also compare on the modification time. Defaults to False.
-        :param skip_checksum: If True, then only compare on the other metrics passed via the arguments. Requires that
-               name is set to True or an assertion error is raised.
+        :param name:
+               If True, then also compare on name. Defaults to False.
+        :param file_type:
+               If True, then also compare on the file type. Defaults to False.
+        :param parent:
+               If True, then also compare on the parent directory name. Defaults to False.
+        :param rel_path:
+               If True, then also compare on teh relative path. Defaults to False.
+        :param ctime:
+               If True, then also compare on the creation time. Defaults to False.
+        :param mtime:
+               If True, then also compare on the modification time. Defaults to False.
+        :param skip_checksum:
+               If True, then only compare on the other metrics passed via the arguments. Requires that name is set to
+               True or an assertion error is raised.
 
         :return: A dictionary of matching files where the key is the file in the query directory and the value is a list
                  of files in the canonical directory which match.
