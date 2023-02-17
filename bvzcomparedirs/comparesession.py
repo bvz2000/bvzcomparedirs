@@ -119,8 +119,8 @@ class Session(object):
                                     excl_file_regexes=self._parameter_to_list(canonical_excl_file_regexes),
                                     report_frequency=report_frequency)
 
-        self.canonical_scan = CanonicalFiles(query_options)
-        self.query_scan = QueryFiles(canonical_options)
+        self.canonical_scan = CanonicalFiles(canonical_options)
+        self.query_scan = QueryFiles(query_options)
 
         self.query_items = self._parameter_to_list(query_items)
         self.canonical_dir = canonical_dir
