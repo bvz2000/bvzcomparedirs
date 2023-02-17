@@ -18,70 +18,109 @@ class Session(object):
     def __init__(self,
                  query_items,
                  canonical_dir,
-                 skip_sub_dir=False,
-                 skip_hidden=False,
-                 skip_zero_len=True,
-                 incl_dir_regexes=None,
-                 excl_dir_regexes=None,
-                 incl_file_regexes=None,
-                 excl_file_regexes=None,
+                 query_skip_sub_dir=False,
+                 query_skip_hidden=False,
+                 query_skip_zero_len=True,
+                 query_incl_dir_regexes=None,
+                 query_excl_dir_regexes=None,
+                 query_incl_file_regexes=None,
+                 query_excl_file_regexes=None,
+                 canonical_skip_sub_dir=False,
+                 canonical_skip_hidden=False,
+                 canonical_skip_zero_len=True,
+                 canonical_incl_dir_regexes=None,
+                 canonical_excl_dir_regexes=None,
+                 canonical_incl_file_regexes=None,
+                 canonical_excl_file_regexes=None,
                  report_frequency=10):
         """
         :param query_items:
-               A list of query directories or files (must include the full path). Also accepts: a set, a tuple, as well
-               as a single string containing a single path.
+            A list of query directories or files (must include the full path). Also accepts: a set, a tuple, as well as
+            a single string containing a single path.
         :param canonical_dir:
-               The full canonical directory path.
-        :param skip_sub_dir:
-               If True, then no subdirectories will be included (only the top-level directory will be scanned). Defaults
-               to False.
-        :param skip_hidden:
-               If True, then hidden files will be ignored in the scan. Defaults to False.
-        :param skip_zero_len:
-               If True, then files of zero length will be skipped. Defaults to True.
-        :param incl_dir_regexes:
-               A list of regular expressions to filter matching directories. Only those that match any of these regexes
-               will be INCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None,
-               no filtering will be done. Defaults to None.
-        :param excl_dir_regexes:
-               A list of regular expressions to filter matching directories. Those that match any of these regexes will
-               be EXCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None, no
-               filtering will be done. Defaults to None.
-        :param incl_file_regexes:
-               A list of regular expressions to filter matching files. Only those that match any of these regexes will
-               be INCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None, no
-               filtering will be done. Defaults to None.
-        :param excl_file_regexes:
-               A list of regular expressions to filter matching files. Those that match any of these regexes will be
-               EXCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None, no
-               filtering will be done. Defaults to None.
+            The full canonical directory path.
+        :param query_skip_sub_dir:
+            If True, then no subdirectories of the query directory will be included (only the top-level directory will
+            be scanned). Defaults to False.
+        :param query_skip_hidden:
+            If True, then hidden files in the query list will be ignored in the scan. Defaults to False.
+        :param query_skip_zero_len:
+            If True, then files of zero length in the query list will be skipped. Defaults to True.
+        :param query_incl_dir_regexes:
+            A list of regular expressions to filter matching query subdirectories. Only those that match any of these
+            regexes will be INCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If
+            None, no filtering will be done. Defaults to None.
+        :param query_excl_dir_regexes:
+            A list of regular expressions to filter matching query subdirectories. Those that match any of these regexes
+            will be EXCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If None, no
+            filtering will be done. Defaults to None.
+        :param query_incl_file_regexes:
+            A list of regular expressions to filter matching files in the query list. Only those that match any of these
+            regexes will be INCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If
+            None, no filtering will be done. Defaults to None.
+        :param query_excl_file_regexes:
+            A list of regular expressions to filter matching files in the query list. Those that match any of these
+            regexes will be EXCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If
+            None, no filtering will be done. Defaults to None.
+        :param canonical_skip_sub_dir:
+            If True, then no subdirectories of the canonical directory will be included (only the top-level directory
+            will be scanned). Defaults to False.
+        :param canonical_skip_hidden:
+            If True, then hidden files in the canonical directory will be ignored in the scan. Defaults to False.
+        :param canonical_skip_zero_len:
+            If True, then files of zero length in the canonical directory will be skipped. Defaults to True.
+        :param canonical_incl_dir_regexes:
+            A list of regular expressions to filter matching canonical subdirectories. Only those that match any of
+            these regexes will be INCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex.
+            If None, no filtering will be done. Defaults to None.
+        :param canonical_excl_dir_regexes:
+            A list of regular expressions to filter matching canonical subdirectories. Those that match any of these
+            regexes will be EXCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex. If
+            None, no filtering will be done. Defaults to None.
+        :param canonical_incl_file_regexes:
+            A list of regular expressions to filter matching files in the canonical directory. Only those that match any
+            of these regexes will be INCLUDED. Also accepts a set, a tuple, as well as a string containing a single
+            regex. If None, no filtering will be done. Defaults to None.
+        :param canonical_excl_file_regexes:
+            A list of regular expressions to filter matching files in the canonical directory. Those that match any of
+            these regexes will be EXCLUDED. Also accepts a set, a tuple, as well as a string containing a single regex.
+            If None, no filtering will be done. Defaults to None.
         :param report_frequency:
-               How many files to scan before reporting back a count of scanned files to the calling function. Defaults
-               to 10.
+            How many files to scan before reporting back a count of scanned files to the calling function. Defaults to
+            an integer value of 10.
         """
 
         assert type(query_items) in [list, set, tuple, str]
         assert type(canonical_dir) is str
-        assert type(skip_sub_dir) is bool
-        assert type(skip_hidden) is bool
-        assert type(skip_zero_len) is bool
-        assert incl_dir_regexes is None or type(incl_dir_regexes) in [list, set, tuple, str]
-        assert excl_dir_regexes is None or type(excl_dir_regexes) in [list, set, tuple, str]
-        assert incl_file_regexes is None or type(incl_file_regexes) in [list, set, tuple, str]
-        assert excl_file_regexes is None or type(excl_file_regexes) in [list, set, tuple, str]
+        assert type(query_skip_sub_dir) is bool
+        assert type(query_skip_hidden) is bool
+        assert type(query_skip_zero_len) is bool
+        assert query_incl_dir_regexes is None or type(query_incl_dir_regexes) in [list, set, tuple, str]
+        assert query_excl_dir_regexes is None or type(query_excl_dir_regexes) in [list, set, tuple, str]
+        assert query_incl_file_regexes is None or type(query_incl_file_regexes) in [list, set, tuple, str]
+        assert query_excl_file_regexes is None or type(query_excl_file_regexes) in [list, set, tuple, str]
         assert type(report_frequency) is int
 
-        options = Options(skip_sub_dir=skip_sub_dir,
-                          skip_hidden=skip_hidden,
-                          skip_zero_len=skip_zero_len,
-                          incl_dir_regexes=self._parameter_to_list(incl_dir_regexes),
-                          excl_dir_regexes=self._parameter_to_list(excl_dir_regexes),
-                          incl_file_regexes=self._parameter_to_list(incl_file_regexes),
-                          excl_file_regexes=self._parameter_to_list(excl_file_regexes),
-                          report_frequency=report_frequency)
+        query_options = Options(skip_sub_dir=query_skip_sub_dir,
+                                skip_hidden=query_skip_hidden,
+                                skip_zero_len=query_skip_zero_len,
+                                incl_dir_regexes=self._parameter_to_list(query_incl_dir_regexes),
+                                excl_dir_regexes=self._parameter_to_list(query_excl_dir_regexes),
+                                incl_file_regexes=self._parameter_to_list(query_incl_file_regexes),
+                                excl_file_regexes=self._parameter_to_list(query_excl_file_regexes),
+                                report_frequency=report_frequency)
 
-        self.canonical_scan = CanonicalFiles(options)
-        self.query_scan = QueryFiles(options)
+        canonical_options = Options(skip_sub_dir=canonical_skip_sub_dir,
+                                    skip_hidden=canonical_skip_hidden,
+                                    skip_zero_len=canonical_skip_zero_len,
+                                    incl_dir_regexes=self._parameter_to_list(canonical_incl_dir_regexes),
+                                    excl_dir_regexes=self._parameter_to_list(canonical_excl_dir_regexes),
+                                    incl_file_regexes=self._parameter_to_list(canonical_incl_file_regexes),
+                                    excl_file_regexes=self._parameter_to_list(canonical_excl_file_regexes),
+                                    report_frequency=report_frequency)
+
+        self.canonical_scan = CanonicalFiles(query_options)
+        self.query_scan = QueryFiles(canonical_options)
 
         self.query_items = self._parameter_to_list(query_items)
         self.canonical_dir = canonical_dir
@@ -104,10 +143,11 @@ class Session(object):
         returned.
 
         :param param_value:
-               The parameter value that is to be turned into a list if it is not already a list.
+            The parameter value that is to be turned into a list if it is not already a list.
 
-        :return: The param_value embedded in a list. If param_value is already a list or is None, returns param_value
-                 unchanged.
+        :return:
+            The param_value embedded in a list. If param_value is already a list or is None, returns param_value
+            unchanged.
         """
 
         if param_value is None:
@@ -123,7 +163,8 @@ class Session(object):
         """
         Execute the query scan on the list of files and/or directories.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         directories_p = list()
@@ -146,7 +187,8 @@ class Session(object):
         """
         Execute the canonical scan.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         for file_count in self.canonical_scan.scan_directory(scan_dir=self.canonical_dir):
@@ -159,9 +201,10 @@ class Session(object):
         Adds a file path to the list of unique files.
 
         :param file_p:
-               The path to the unique file.
+            The path to the unique file.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         self.unique.add(file_p)
@@ -174,11 +217,12 @@ class Session(object):
         Appends the possible match to the list of actual matches.
 
         :param file_p:
-               The full path to the file in the canonical dir.
+            The full path to the file in the canonical dir.
         :param match_p:
-               The full path to the file in the query dir that matches the file_p.
+            The full path to the file in the query dir that matches the file_p.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         try:
@@ -200,23 +244,24 @@ class Session(object):
         comparison. Size is always used as a comparison attribute.
 
         :param name:
-               If True, then also compare on name. Defaults to False.
+            If True, then also compare on name. Defaults to False.
         :param file_type:
-               If True, then also compare on the file type. Defaults to False.
+            If True, then also compare on the file type. Defaults to False.
         :param parent:
-               If True, then also compare on the parent directory name. Defaults to False.
+            If True, then also compare on the parent directory name. Defaults to False.
         :param rel_path:
-               If True, then also compare on teh relative path. Defaults to False.
+            If True, then also compare on teh relative path. Defaults to False.
         :param ctime:
-               If True, then also compare on the creation time. Defaults to False.
+            If True, then also compare on the creation time. Defaults to False.
         :param mtime:
-               If True, then also compare on the modification time. Defaults to False.
+            If True, then also compare on the modification time. Defaults to False.
         :param skip_checksum:
-               If True, then only compare on the other metrics passed via the arguments. Requires that name is set to
-               True or an assertion error is raised.
+            If True, then only compare on the other metrics passed via the arguments. Requires that name is set to True
+            or an assertion error is raised.
 
-        :return: A dictionary of matching files where the key is the file in the query directory and the value is a list
-                 of files in the canonical directory which match.
+        :return:
+            A dictionary of matching files where the key is the file in the query directory and the value is a list of
+            files in the canonical directory which match.
         """
 
         if skip_checksum:
