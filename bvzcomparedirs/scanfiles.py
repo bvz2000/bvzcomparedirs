@@ -122,7 +122,7 @@ class ScanFiles(object):
 
         for regex in regexes:
             for item in items:
-                if re.match(str(regex), item) is not None:
+                if re.search(str(regex), item) is not None:
                     return True
         return False
 
@@ -182,6 +182,8 @@ class ScanFiles(object):
         """
 
         assert type(scan_dir) is str
+
+        scan_dir = os.path.abspath(scan_dir)
 
         if not scan_dir:
             raise IOError("No directory has been set to scan.")
@@ -274,12 +276,12 @@ class ScanFiles(object):
             return
 
         if self.options.incl_dir_regexes:
-            if not self._match_regex(regexes=self.options.incl_dir_regexes, items=path_items):
+            if not self._match_regex(regexes=self.options.incl_dir_regexes, items=[file_d]):
                 self.skipped_include += 1
                 return
 
         if self.options.excl_dir_regexes is not None:
-            if self._match_regex(regexes=self.options.excl_dir_regexes, items=path_items):
+            if self._match_regex(regexes=self.options.excl_dir_regexes, items=[file_d]):
                 self.skipped_exclude += 1
                 return
 
