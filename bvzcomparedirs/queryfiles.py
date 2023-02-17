@@ -13,7 +13,7 @@ class QueryFiles(ScanFiles):
                  options):
         """
         :param options:
-               An options object containing the preferences for the scan parameters.
+            An options object containing the preferences for the scan parameters.
         """
 
         super().__init__(options)
@@ -28,11 +28,12 @@ class QueryFiles(ScanFiles):
         Appends a new file to the scan dictionary.
 
         :param file_path:
-               The path to the file to add
+            The path to the file to add
         :param metadata:
-               The metadata for this file.
+            The metadata for this file.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         self.files[file_path] = metadata

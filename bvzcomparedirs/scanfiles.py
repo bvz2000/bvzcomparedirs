@@ -17,7 +17,7 @@ class ScanFiles(object):
                  options):
         """
         :param options:
-               An options object containing the preferences for the scan parameters.
+            An options object containing the preferences for the scan parameters.
         """
 
         self.options = options
@@ -45,7 +45,8 @@ class ScanFiles(object):
         abomination they have come up with. For now, only Unix-style systems are supported. But this method is here so
         that I can add Windows compatibility in the future.
 
-        :return: The path to the root of the filesystem.
+        :return:
+            The path to the root of the filesystem.
         """
 
         return os.path.sep
@@ -59,9 +60,10 @@ class ScanFiles(object):
         now. But this method exists so that I can add Windows compatibility in the future.
 
         :param file_p:
-               The path to the file that we want to determine whether it is hidden or not.
+            The path to the file that we want to determine whether it is hidden or not.
 
-        :return: True if the file is hidden. False otherwise.
+        :return:
+            True if the file is hidden. False otherwise.
         """
 
         return os.path.split(file_p)[1][0] == "."
@@ -74,11 +76,12 @@ class ScanFiles(object):
         Gets the metadata for the given file path.
 
         :param file_p:
-               The path to the file to add.
+            The path to the file to add.
         :param root_p:
-               The path to the root against which a relative path is determined.
+            The path to the root against which a relative path is determined.
 
-        :return: A dictionary of attributes.
+        :return:
+            A dictionary of attributes.
         """
 
         attrs = dict()
@@ -99,7 +102,8 @@ class ScanFiles(object):
         """
         To be overridden in subclass
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         raise NotImplementedError
@@ -113,11 +117,12 @@ class ScanFiles(object):
         expressions.
 
         :param regexes:
-               A list of regex expressions to check against.
+            A list of regex expressions to check against.
         :param items:
-               A list of items to run the regex against.
+            A list of items to run the regex against.
 
-        :return: True if any item matches any regex. False otherwise.
+        :return:
+            True if any item matches any regex. False otherwise.
         """
 
         for regex in regexes:
@@ -133,9 +138,10 @@ class ScanFiles(object):
         Handle errors during the os.walk scan of the dir
 
         :param exception_obj:
-               The exception that occurred.
+            The exception that occurred.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         self.error_count += 1
@@ -158,9 +164,10 @@ class ScanFiles(object):
         Scan a list of directories and store the metadata for every file (optionally include subdirectories).
 
         :param scan_dirs:
-               A list containing full paths to directories to scan.
+            A list containing full paths to directories to scan.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         assert type(scan_dirs) in [list, set, tuple]
@@ -176,9 +183,10 @@ class ScanFiles(object):
         Scan an entire directory and store the metadata for every file (optionally include subdirectories).
 
         :param scan_dir:
-               A full path to the directory to scan.
+            A full path to the directory to scan.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         assert type(scan_dir) is str
@@ -210,12 +218,13 @@ class ScanFiles(object):
         Scan a specific list of files and store the metadata for every file.
 
         :param files_p:
-               A list of files (with full paths).
+            A list of files (with full paths).
         :param root_p:
-               The root path against which a relative path for the files can be extracted. If None, uses the root of the
-               file system. Default is None.
+            The root path against which a relative path for the files can be extracted. If None, uses the root of the
+            file system. Default is None.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         assert type(files_p) is list
@@ -237,12 +246,13 @@ class ScanFiles(object):
         Scan a single file and stores its metadata.
 
         :param file_p:
-               A full path toa file to scan.
+            A full path toa file to scan.
         :param root_p:
-               The root path against which a relative path for the files can be extracted. If None, uses the root of the
-               file system. Default is None.
+            The root path against which a relative path for the files can be extracted. If None, uses the root of the
+            file system. Default is None.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         assert type(file_p) is str

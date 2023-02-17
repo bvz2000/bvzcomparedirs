@@ -13,7 +13,7 @@ class CanonicalFiles(ScanFiles):
                  options):
         """
         :param options:
-               An options object containing the preferences for the scan parameters.
+            An options object containing the preferences for the scan parameters.
         """
 
         super().__init__(options)
@@ -37,11 +37,12 @@ class CanonicalFiles(ScanFiles):
         Appends the file_path to the given dictionary.
 
         :param by_dict:
-               The dictionary to append to.
+            The dictionary to append to.
         :param file_path:
-               The path that is being appended.
+            The path that is being appended.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         try:
@@ -57,11 +58,12 @@ class CanonicalFiles(ScanFiles):
         Appends a new file to the scan dictionaries.
 
         :param file_path:
-               The path to the file to add
+            The path to the file to add
         :param metadata:
-               The metadata for this file.
+            The metadata for this file.
 
-        :return: Nothing.
+        :return:
+            Nothing.
         """
 
         self._append_to_dict(by_dict=self.by_size,
@@ -109,22 +111,23 @@ class CanonicalFiles(ScanFiles):
         contains all file paths that exist in BOTH the by_size[1024] dictionary and by_name["bob.txt"] dictionary.
 
         :param size:
-               The file size key. This attribute is required.
+            The file size key. This attribute is required.
         :param name:
-               The file name key. If None, then this attribute is ignored when creating the intersection.
+            The file name key. If None, then this attribute is ignored when creating the intersection.
         :param file_type:
-               The file_type key. If None, then this attribute is ignored when creating the intersection.
+            The file_type key. If None, then this attribute is ignored when creating the intersection.
         :param parent:
-               The parent key. If None, then this attribute is ignored when creating the intersection.
+            The parent key. If None, then this attribute is ignored when creating the intersection.
         :param rel_path:
-               The rel_path key. If None, then this attribute is ignored when creating the intersection.
+            The rel_path key. If None, then this attribute is ignored when creating the intersection.
         :param ctime:
-               The ctime key. If None, then this attribute is ignored when creating the intersection.
+            The ctime key. If None, then this attribute is ignored when creating the intersection.
         :param mtime:
-               The mtime key. If None, then this attribute is ignored when creating the intersection.
+            The mtime key. If None, then this attribute is ignored when creating the intersection.
 
-        :return: A set of file paths that exist in the intersection of all the dictionaries whose passed attribute
-                 is not None.
+        :return:
+            A set of file paths that exist in the intersection of all the dictionaries whose passed attribute is not
+            None.
         """
 
         try:
@@ -181,9 +184,10 @@ class CanonicalFiles(ScanFiles):
         Tries to load the checksum from the checksum dictionary. If there is no checksum available, returns None.
 
         :param file_path:
-               The path to the file for which we want to get the stored checksum.
+            The path to the file for which we want to get the stored checksum.
 
-        :return: The checksum that was stored. If there was no stored checksum, returns None.
+        :return:
+            The checksum that was stored. If there was no stored checksum, returns None.
         """
 
         try:
