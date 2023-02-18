@@ -37,6 +37,8 @@ class ScanFiles(object):
         self.skipped_exclude = 0
         self.skipped_include = 0
 
+        self.checksum = dict()
+
     # ------------------------------------------------------------------------------------------------------------------
     @staticmethod
     def _get_filesystem_root():
@@ -67,6 +69,42 @@ class ScanFiles(object):
         """
 
         return os.path.split(file_p)[1][0] == "."
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def store_checksum_in_cache(self,
+                                file_p,
+                                checksum):
+        """
+        Caches the checksum for the given file path in a dictionary.
+
+        :param file_p:
+            The path to the file for which we want to store the checksum.
+        :param checksum:
+            The checksum value to be cached
+
+        :return:
+            Norhing.
+        """
+
+        self.checksum[file_p] = checksum
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def retrieve_checksum_from_cache(self,
+                                     file_p):
+        """
+        Tries to load the checksum from the checksum dictionary. If there is no checksum available, returns None.
+
+        :param file_p:
+            The path to the file for which we want to get the stored checksum.
+
+        :return:
+            The checksum that was stored. If there was no stored checksum, returns None.
+        """
+
+        try:
+            return self.checksum[file_p]
+        except KeyError:
+            return None
 
     # ------------------------------------------------------------------------------------------------------------------
     @staticmethod

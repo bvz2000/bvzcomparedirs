@@ -99,6 +99,10 @@ class Session(object):
         assert query_excl_dir_regexes is None or type(query_excl_dir_regexes) in [list, set, tuple, str]
         assert query_incl_file_regexes is None or type(query_incl_file_regexes) in [list, set, tuple, str]
         assert query_excl_file_regexes is None or type(query_excl_file_regexes) in [list, set, tuple, str]
+        assert canonical_incl_dir_regexes is None or type(canonical_incl_dir_regexes) in [list, set, tuple, str]
+        assert canonical_excl_dir_regexes is None or type(canonical_excl_dir_regexes) in [list, set, tuple, str]
+        assert canonical_incl_file_regexes is None or type(canonical_incl_file_regexes) in [list, set, tuple, str]
+        assert canonical_excl_file_regexes is None or type(canonical_excl_file_regexes) in [list, set, tuple, str]
         assert type(report_frequency) is int
 
         query_options = Options(skip_sub_dir=query_skip_sub_dir,
@@ -139,7 +143,7 @@ class Session(object):
     def _parameter_to_list(param_value):
         """
         Given a parameter (param_value) checks to see if it is a list, tuple, set, or None. If so, the parameter is
-        returned unchanged. If it is not a list and is not None, param_value is embedded in a list and that list is
+        returned unchanged. If it is not a list, tuple, set, or None, param_value is embedded in a list and that list is
         returned.
 
         :param param_value:
@@ -211,14 +215,14 @@ class Session(object):
 
     # ------------------------------------------------------------------------------------------------------------------
     def append_match(self,
-                     file_p,
-                     match_p):
+                     canonical_p,
+                     query_p):
         """
         Appends the possible match to the list of actual matches.
 
-        :param file_p:
+        :param canonical_p:
             The full path to the file in the canonical dir.
-        :param match_p:
+        :param query_p:
             The full path to the file in the query dir that matches the file_p.
 
         :return:
@@ -226,9 +230,9 @@ class Session(object):
         """
 
         try:
-            self.actual_matches[file_p].append(match_p)
+            self.actual_matches[canonical_p].append(query_p)
         except KeyError:
-            self.actual_matches[file_p] = [match_p]
+            self.actual_matches[canonical_p] = [query_p]
 
     # ------------------------------------------------------------------------------------------------------------------
     def do_compare(self,
@@ -330,7 +334,7 @@ class Session(object):
                     self.append_match(file_p, possible_match_p)
                     continue
 
-                possible_match_checksum = self.canonical_scan.get_checksum(possible_match_p)
+                possible_match_checksum = self.canonical_scan.retrieve_checksum_from_cache(possible_match_p)
 
                 if possible_match_checksum is not None:
                     self.pre_computed_checksum_count += 1
@@ -349,7 +353,7 @@ class Session(object):
 
                 if checksum:
                     match = True
-                    self.canonical_scan.checksum[possible_match_p] = checksum
+                    self.canonical_scan.store_checksum_in_cache(file_p=possible_match_p, checksum=checksum)
                     self.append_match(file_p, possible_match_p)
 
             if not match:

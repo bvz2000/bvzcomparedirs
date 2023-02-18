@@ -26,8 +26,6 @@ class CanonicalFiles(ScanFiles):
         self.by_ctime = dict()
         self.by_mtime = dict()
 
-        self.checksum = dict()
-
     # ------------------------------------------------------------------------------------------------------------------
     @staticmethod
     def _append_to_dict(by_dict,
@@ -176,21 +174,3 @@ class CanonicalFiles(ScanFiles):
         intersection = size_set.intersection(*sets)
 
         return intersection
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def get_checksum(self,
-                     file_path):
-        """
-        Tries to load the checksum from the checksum dictionary. If there is no checksum available, returns None.
-
-        :param file_path:
-            The path to the file for which we want to get the stored checksum.
-
-        :return:
-            The checksum that was stored. If there was no stored checksum, returns None.
-        """
-
-        try:
-            return self.checksum[file_path]
-        except KeyError:
-            return None
