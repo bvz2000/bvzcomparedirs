@@ -1,36 +1,31 @@
 #! /usr/bin/env python3
 
-import errno
 import os.path
 import re
 import stat
 
-# TODO: Any include REGEX tests are currently broken - they need to be inclusive of all of the tests, not just the first
-#  one they come to.
-
 
 class ScanFiles(object):
     """
-    A class to scan and store the attributes of every file in a single directory. Alternately has the ability to work
-    with an arbitrary list of files instead of a scanned directory. This class should be subclassed and not used
-    directly.
+    A class to scan and store the attributes of every file in multiple directories and/or an arbitrary list of files.
+    This class should be subclassed and not used directly.
     """
 
     # ------------------------------------------------------------------------------------------------------------------
     def __init__(self,
-                 options):
+                 scan_options):
         """
-        :param options:
+        :param scan_options:
             An options object containing the preferences for the scan parameters.
         """
 
-        self.options = options
+        self.options = scan_options
 
-        self.dir_permission_err_files = set()
-        self.dir_generic_err_files = set()
         self.file_permission_err_files = set()
-        self.file_generic_err_files = set()
+        self.dir_permission_err_dirs = set()
         self.file_not_found_err_files = set()
+        self.dir_generic_err_dirs = set()
+        self.file_generic_err_files = set()
 
         self.initial_count = 0
         self.checked_count = 0
@@ -77,6 +72,8 @@ class ScanFiles(object):
             True if the file is hidden. False otherwise.
         """
 
+        assert type(file_p) is str
+
         return os.path.split(file_p)[1][0] == "."
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -92,8 +89,11 @@ class ScanFiles(object):
             The checksum value to be cached
 
         :return:
-            Norhing.
+            Nothing.
         """
+
+        assert type(file_p) is str
+        assert type(checksum) is str
 
         self.checksum[file_p] = checksum
 
@@ -110,6 +110,8 @@ class ScanFiles(object):
             The checksum that was stored. If there was no stored checksum, returns None.
         """
 
+        assert type(file_p) is str
+
         try:
             return self.checksum[file_p]
         except KeyError:
@@ -117,13 +119,14 @@ class ScanFiles(object):
 
     # ------------------------------------------------------------------------------------------------------------------
     @staticmethod
-    def _has_read_permissions(st_mode,
-                              file_uid,
-                              file_gid,
-                              uid,
-                              gid):
+    def _has_file_read_permissions(st_mode,
+                                   file_uid,
+                                   file_gid,
+                                   uid,
+                                   gid):
         """
-        Returns true if the uid passed has read permissions for the passed file stat
+        Returns true if the uid and gid passed has read permissions for the passed file's st_mode, file_uid, and
+        file_gid.
 
         :param st_mode:
             The results of an os.stat.st_mode on the file in question.
@@ -139,6 +142,12 @@ class ScanFiles(object):
         :return:
             True if the user has read permissions.
         """
+
+        assert type(st_mode) is int
+        assert type(file_uid) is int
+        assert type(file_gid) is int
+        assert type(uid) is int
+        assert type(gid) is int
 
         if file_uid == uid:
             return bool(stat.S_IRUSR & st_mode)
@@ -163,6 +172,9 @@ class ScanFiles(object):
         :return:
             A dictionary of attributes.
         """
+
+        assert type(file_p) is str
+        assert type(root_p) is str
 
         attrs = dict()
 
@@ -198,25 +210,27 @@ class ScanFiles(object):
 
     # ------------------------------------------------------------------------------------------------------------------
     @staticmethod
-    def _match_regex(regexes,
-                     items):
+    def _match_any_regex(regexes,
+                         item):
         """
-        Given a list of regex expressions and a list of items, returns True if any of the items match any of the regex
-        expressions.
+        Given a list of regex expressions and an item, returns True if the item matches ALL the regex expressions.
 
         :param regexes:
             A list of regex expressions to check against.
-        :param items:
-            A list of items to run the regex against.
+        :param item:
+            A string to run the regex against.
 
         :return:
             True if any item matches any regex. False otherwise.
         """
 
+        assert type(regexes) in [list, set, tuple]
         for regex in regexes:
-            for item in items:
-                if re.search(str(regex), item) is not None:
-                    return True
+            assert type(regex) is str
+
+        for regex in regexes:
+            if re.search(str(regex), item) is not None:
+                return True
         return False
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -239,6 +253,8 @@ class ScanFiles(object):
         """
 
         assert type(scan_dirs) in [list, set, tuple]
+        assert type(uid) is int
+        assert type(gid) is int
 
         for scan_dir in scan_dirs:
             for _ in self.scan_directory(scan_dir=scan_dir, root_p=scan_dir, uid=uid, gid=gid):
@@ -266,6 +282,11 @@ class ScanFiles(object):
             Nothing.
         """
 
+        assert type(scan_dir) is str
+        assert type(root_p) is str
+        assert type(uid) is int
+        assert type(gid) is int
+
         if not scan_dir:
             raise IOError("No directory has been set to scan.")
 
@@ -275,33 +296,40 @@ class ScanFiles(object):
         if not os.path.isdir(scan_dir):
             raise IOError(f"The path {scan_dir} is not a directory")
 
-        for entry in os.scandir(scan_dir):
+        try:
 
-            if entry.is_dir(follow_symlinks=False) and not self.options.skip_sub_dir:
+            for entry in os.scandir(scan_dir):
 
-                if self.options.skip_hidden_dirs and entry.name[0] == ".":
-                    self.skipped_hidden_dirs += 1
-                    yield self.checked_count
+                if entry.is_dir(follow_symlinks=False) and not self.options.skip_sub_dir:
+
+                    if self.options.skip_hidden_dirs and entry.name[0] == ".":
+                        self.skipped_hidden_dirs += 1
+                        yield self.checked_count
+                        continue
+
+                    if self.options.incl_dir_regexes:
+                        if not self._match_any_regex(regexes=self.options.incl_dir_regexes, item=entry.path):
+                            self.skipped_include_dirs += 1
+                            yield self.checked_count
+                            continue
+
+                    if self.options.excl_dir_regexes is not None:
+                        if self._match_any_regex(regexes=self.options.excl_dir_regexes, item=entry.path):
+                            self.skipped_exclude_dirs += 1
+                            yield self.checked_count
+                            continue
+
+                    yield from self.scan_directory(scan_dir=entry.path, root_p=root_p, uid=uid, gid=gid)
                     continue
 
-                if self.options.incl_dir_regexes:
-                    if not self._match_regex(regexes=self.options.incl_dir_regexes, items=[entry.path]):
-                        self.skipped_include_dirs += 1
-                        yield self.checked_count
-                        continue
+                self.scan_file(file_p=entry.path, root_p=root_p, uid=uid, gid=gid)
+                if self.checked_count % self.options.report_frequency == 0:
+                    yield self.checked_count
 
-                if self.options.excl_dir_regexes is not None:
-                    if self._match_regex(regexes=self.options.excl_dir_regexes, items=[entry.path]):
-                        self.skipped_exclude_dirs += 1
-                        yield self.checked_count
-                        continue
+        except PermissionError:
 
-                yield from self.scan_directory(scan_dir=entry.path, root_p=root_p, uid=uid, gid=gid)
-                continue
-
-            self.scan_file(file_p=entry.path, root_p=root_p, uid=uid, gid=gid)
-            if self.checked_count % self.options.report_frequency == 0:
-                yield self.checked_count
+            self.error_count += 1
+            self.dir_permission_err_dirs.add(scan_dir)
 
     # ------------------------------------------------------------------------------------------------------------------
     def scan_files(self,
@@ -326,7 +354,9 @@ class ScanFiles(object):
         """
 
         assert type(files_p) in [list, set, tuple]
-        assert root_p is None or type(root_p) is str
+        assert type(root_p) is str
+        assert type(uid) is int
+        assert type(gid) is int
 
         for file_p in files_p:
 
@@ -361,7 +391,9 @@ class ScanFiles(object):
         """
 
         assert type(file_p) is str
-        assert root_p is None or type(root_p) is str
+        assert type(root_p) is str
+        assert type(uid) is int
+        assert type(gid) is int
 
         self.checked_count += 1
 
@@ -373,22 +405,22 @@ class ScanFiles(object):
                 return
 
         if self.options.incl_dir_regexes:
-            if not self._match_regex(regexes=self.options.incl_dir_regexes, items=[file_d]):
+            if not self._match_any_regex(regexes=self.options.incl_dir_regexes, item=file_d):
                 self.skipped_include_files += 1
                 return
 
         if self.options.excl_dir_regexes is not None:
-            if self._match_regex(regexes=self.options.excl_dir_regexes, items=[file_d]):
+            if self._match_any_regex(regexes=self.options.excl_dir_regexes, item=file_d):
                 self.skipped_include_files += 1
                 return
 
         if self.options.incl_file_regexes is not None:
-            if not self._match_regex(regexes=self.options.incl_file_regexes, items=[file_n]):
+            if not self._match_any_regex(regexes=self.options.incl_file_regexes, item=file_n):
                 self.skipped_include_files += 1
                 return
 
         if self.options.excl_file_regexes is not None:
-            if self._match_regex(regexes=self.options.excl_file_regexes, items=[file_n]):
+            if self._match_any_regex(regexes=self.options.excl_file_regexes, item=file_n):
                 self.skipped_exclude_files += 1
                 return
 
@@ -399,16 +431,15 @@ class ScanFiles(object):
             self.file_not_found_err_files.add(file_p)
             return
 
-        # This needs to come before testing access, because a link always fails the os.R_OK test
         if attrs["islink"]:
             self.skipped_links += 1
             return
 
-        if not self._has_read_permissions(st_mode=attrs["st_mode"],
-                                          file_uid=attrs["file_uid"],
-                                          file_gid=attrs["file_gid"],
-                                          uid=uid,
-                                          gid=gid):
+        if not self._has_file_read_permissions(st_mode=attrs["st_mode"],
+                                               file_uid=attrs["file_uid"],
+                                               file_gid=attrs["file_gid"],
+                                               uid=uid,
+                                               gid=gid):
             self.error_count += 1
             self.file_permission_err_files.add(file_p)
             return
