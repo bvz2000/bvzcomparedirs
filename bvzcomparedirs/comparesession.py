@@ -19,14 +19,16 @@ class Session(object):
                  query_items,
                  canonical_dir,
                  query_skip_sub_dir=False,
-                 query_skip_hidden=False,
+                 query_skip_hidden_files=False,
+                 query_skip_hidden_dirs=False,
                  query_skip_zero_len=True,
                  query_incl_dir_regexes=None,
                  query_excl_dir_regexes=None,
                  query_incl_file_regexes=None,
                  query_excl_file_regexes=None,
                  canonical_skip_sub_dir=False,
-                 canonical_skip_hidden=False,
+                 canonical_skip_hidden_files=False,
+                 canonical_skip_hidden_dirs=False,
                  canonical_skip_zero_len=True,
                  canonical_incl_dir_regexes=None,
                  canonical_excl_dir_regexes=None,
@@ -42,8 +44,10 @@ class Session(object):
         :param query_skip_sub_dir:
             If True, then no subdirectories of the query directory will be included (only the top-level directory will
             be scanned). Defaults to False.
-        :param query_skip_hidden:
+        :param query_skip_hidden_files:
             If True, then hidden files in the query list will be ignored in the scan. Defaults to False.
+        :param query_skip_hidden_dirs:
+            If True, then hidden directories in the query list will be ignored in the scan. Defaults to False.
         :param query_skip_zero_len:
             If True, then files of zero length in the query list will be skipped. Defaults to True.
         :param query_incl_dir_regexes:
@@ -65,8 +69,10 @@ class Session(object):
         :param canonical_skip_sub_dir:
             If True, then no subdirectories of the canonical directory will be included (only the top-level directory
             will be scanned). Defaults to False.
-        :param canonical_skip_hidden:
+        :param canonical_skip_hidden_files:
             If True, then hidden files in the canonical directory will be ignored in the scan. Defaults to False.
+        :param canonical_skip_hidden_dirs:
+            If True, then hidden directories in the canonical directory will be ignored in the scan. Defaults to False.
         :param canonical_skip_zero_len:
             If True, then files of zero length in the canonical directory will be skipped. Defaults to True.
         :param canonical_incl_dir_regexes:
@@ -93,12 +99,17 @@ class Session(object):
         assert type(query_items) in [list, set, tuple, str]
         assert type(canonical_dir) is str
         assert type(query_skip_sub_dir) is bool
-        assert type(query_skip_hidden) is bool
+        assert type(query_skip_hidden_files) is bool
+        assert type(query_skip_hidden_dirs) is bool
         assert type(query_skip_zero_len) is bool
         assert query_incl_dir_regexes is None or type(query_incl_dir_regexes) in [list, set, tuple, str]
         assert query_excl_dir_regexes is None or type(query_excl_dir_regexes) in [list, set, tuple, str]
         assert query_incl_file_regexes is None or type(query_incl_file_regexes) in [list, set, tuple, str]
         assert query_excl_file_regexes is None or type(query_excl_file_regexes) in [list, set, tuple, str]
+        assert type(canonical_skip_sub_dir) is bool
+        assert type(canonical_skip_hidden_files) is bool
+        assert type(canonical_skip_hidden_dirs) is bool
+        assert type(canonical_skip_zero_len) is bool
         assert canonical_incl_dir_regexes is None or type(canonical_incl_dir_regexes) in [list, set, tuple, str]
         assert canonical_excl_dir_regexes is None or type(canonical_excl_dir_regexes) in [list, set, tuple, str]
         assert canonical_incl_file_regexes is None or type(canonical_incl_file_regexes) in [list, set, tuple, str]
@@ -106,7 +117,8 @@ class Session(object):
         assert type(report_frequency) is int
 
         query_options = Options(skip_sub_dir=query_skip_sub_dir,
-                                skip_hidden=query_skip_hidden,
+                                skip_hidden_files=query_skip_hidden_files,
+                                skip_hidden_dirs=query_skip_hidden_dirs,
                                 skip_zero_len=query_skip_zero_len,
                                 incl_dir_regexes=self._parameter_to_list(query_incl_dir_regexes),
                                 excl_dir_regexes=self._parameter_to_list(query_excl_dir_regexes),
@@ -115,7 +127,8 @@ class Session(object):
                                 report_frequency=report_frequency)
 
         canonical_options = Options(skip_sub_dir=canonical_skip_sub_dir,
-                                    skip_hidden=canonical_skip_hidden,
+                                    skip_hidden_files=canonical_skip_hidden_files,
+                                    skip_hidden_dirs=canonical_skip_hidden_dirs,
                                     skip_zero_len=canonical_skip_zero_len,
                                     incl_dir_regexes=self._parameter_to_list(canonical_incl_dir_regexes),
                                     excl_dir_regexes=self._parameter_to_list(canonical_excl_dir_regexes),
