@@ -10,13 +10,13 @@ class CanonicalFiles(ScanFiles):
 
     # ------------------------------------------------------------------------------------------------------------------
     def __init__(self,
-                 options):
+                 scan_options):
         """
-        :param options:
+        :param scan_options:
             An options object containing the preferences for the scan parameters.
         """
 
-        super().__init__(options)
+        super().__init__(scan_options)
 
         self.by_size = dict()
         self.by_name = dict()
