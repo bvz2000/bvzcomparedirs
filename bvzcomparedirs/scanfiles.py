@@ -5,6 +5,9 @@ import os.path
 import re
 import stat
 
+# TODO: Any include REGEX tests are currently broken - they need to be inclusive of all of the tests, not just the first
+#  one they come to.
+
 
 class ScanFiles(object):
     """
@@ -34,7 +37,8 @@ class ScanFiles(object):
         self.skipped_links = 0
         self.error_count = 0
         self.skipped_zero_len = 0
-        self.skipped_hidden = 0
+        self.skipped_hidden_files = 0
+        self.skipped_hidden_dirs = 0
         self.skipped_exclude_dirs = 0
         self.skipped_include_dirs = 0
         self.skipped_exclude_files = 0
@@ -216,32 +220,6 @@ class ScanFiles(object):
         return False
 
     # ------------------------------------------------------------------------------------------------------------------
-    def _os_walk_error(self,
-                       exception_obj):
-        """
-        Handle errors during the os.walk scan of the dir
-
-        :param exception_obj:
-            The exception that occurred.
-
-        :return:
-            Nothing.
-        """
-
-        self.error_count += 1
-
-        if os.path.isdir(exception_obj.filename):
-            if exception_obj.errno == errno.EACCES:
-                self.dir_permission_err_files.add(exception_obj.filename)
-            else:
-                self.dir_generic_err_files.add(exception_obj.filename)
-        else:
-            if exception_obj.errno == errno.EACCES:
-                self.file_permission_err_files.add(exception_obj.filename)
-            else:
-                self.file_generic_err_files.add(exception_obj.filename)
-
-    # ------------------------------------------------------------------------------------------------------------------
     def scan_directories(self,
                          scan_dirs,
                          uid,
@@ -300,6 +278,11 @@ class ScanFiles(object):
         for entry in os.scandir(scan_dir):
 
             if entry.is_dir(follow_symlinks=False) and not self.options.skip_sub_dir:
+
+                if self.options.skip_hidden_dirs and entry.name[0] == ".":
+                    self.skipped_hidden_dirs += 1
+                    yield self.checked_count
+                    continue
 
                 if self.options.incl_dir_regexes:
                     if not self._match_regex(regexes=self.options.incl_dir_regexes, items=[entry.path]):
@@ -384,9 +367,9 @@ class ScanFiles(object):
 
         file_d, file_n = os.path.split(file_p)
 
-        if self.options.skip_hidden:
+        if self.options.skip_hidden_files:
             if self._is_hidden(file_p=file_p):
-                self.skipped_hidden += 1
+                self.skipped_hidden_files += 1
                 return
 
         if self.options.incl_dir_regexes:
@@ -430,11 +413,6 @@ class ScanFiles(object):
             self.file_permission_err_files.add(file_p)
             return
 
-        # if not os.access(file_p, os.R_OK):
-        #     self.error_count += 1
-        #     self.file_permission_err_files.add(file_p)
-        #     return
-
         if self.options.skip_zero_len:
             if attrs["size"] == 0:
                 self.skipped_zero_len += 1
@@ -444,93 +422,3 @@ class ScanFiles(object):
 
         self._append_to_scan(file_path=file_p,
                              metadata=attrs)
-
-    #
-    #
-    #
-    # # ------------------------------------------------------------------------------------------------------------------
-    # def old_scan_file(self,
-    #               file_p,
-    #               root_p=None):
-    #     """
-    #     Scan a single file and stores its metadata.
-    #
-    #     :param file_p:
-    #         A full path toa file to scan.
-    #     :param root_p:
-    #         The root path against which a relative path for the files can be extracted. If None, uses the root of the
-    #         file system. Default is None.
-    #
-    #     :return:
-    #         Nothing.
-    #     """
-    #
-    #     assert type(file_p) is str
-    #     assert root_p is None or type(root_p) is str
-    #
-    #     if root_p is None:
-    #         root_p = self._get_filesystem_root()
-    #
-    #     file_d, file_n = os.path.split(file_p)
-    #     path_items = [item for item in file_d.split(os.path.sep) if item != ""]
-    #
-    #     self.checked_count += 1
-    #
-    #     # This needs to come before testing access, because a link always fails the os.R_OK test
-    #     if os.path.islink(file_p):
-    #         self.skipped_links += 1
-    #         return
-    #
-    #     if not os.path.exists(file_p):
-    #         self.error_count += 1
-    #         self.file_not_found_err_files.add(file_p)
-    #         return
-    #
-    #     if not os.access(file_p, os.R_OK):
-    #         self.error_count += 1
-    #         self.file_permission_err_files.add(file_p)
-    #         return
-    #
-    #     if self.options.skip_hidden and self._is_hidden(file_p=file_p):
-    #         self.skipped_hidden += 1
-    #         return
-    #
-    #     if self.options.incl_dir_regexes:
-    #         if not self._match_regex(regexes=self.options.incl_dir_regexes, items=[file_d]):
-    #             self.skipped_include += 1
-    #             return
-    #
-    #     if self.options.excl_dir_regexes is not None:
-    #         if self._match_regex(regexes=self.options.excl_dir_regexes, items=[file_d]):
-    #             self.skipped_exclude += 1
-    #             return
-    #
-    #     if self.options.incl_file_regexes is not None:
-    #         if not self._match_regex(regexes=self.options.incl_file_regexes, items=[file_n]):
-    #             self.skipped_include += 1
-    #             return
-    #
-    #     if self.options.excl_file_regexes is not None:
-    #         if self._match_regex(regexes=self.options.excl_file_regexes, items=[file_n]):
-    #             self.skipped_exclude += 1
-    #             return
-    #
-    #     try:
-    #         file_size = os.path.getsize(file_p)
-    #     except FileNotFoundError:
-    #         self.file_not_found_err_files.add(file_p)
-    #         self.error_count += 1
-    #         return
-    #
-    #     if self.options.skip_zero_len:
-    #         if file_size == 0:
-    #             self.skipped_zero_len += 1
-    #             return
-    #
-    #     self.initial_count += 1
-    #
-    #     file_metadata = self._get_metadata(file_p=file_p,
-    #                                        root_p=root_p)
-    #
-    #     self._append_to_scan(file_path=file_p,
-    #                          metadata=file_metadata)
