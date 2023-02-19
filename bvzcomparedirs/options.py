@@ -4,7 +4,8 @@ from dataclasses import dataclass
 @dataclass
 class Options:
     skip_sub_dir: bool = False
-    skip_hidden: bool = False
+    skip_hidden_files: bool = False
+    skip_hidden_dirs: bool = False
     skip_zero_len: bool = True
     incl_dir_regexes: list = None
     excl_dir_regexes: list = None
