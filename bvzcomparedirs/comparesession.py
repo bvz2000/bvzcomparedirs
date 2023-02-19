@@ -180,11 +180,19 @@ class Session(object):
             else:
                 files_p.append(query_item)
 
-        for item_count in self.query_scan.scan_directories(scan_dirs=directories_p):
-            yield item_count
+        if directories_p:
+            for file_count in self.query_scan.scan_directories(scan_dirs=directories_p,
+                                                               uid=os.getuid(),
+                                                               gid=os.getgid()):
+                yield file_count
 
-        for item_count in self.query_scan.scan_files(files_p=files_p):
-            yield item_count
+        # TODO: do a better job getting the root path
+        if files_p:
+            for file_count in self.query_scan.scan_files(files_p=files_p,
+                                                         root_p=os.path.sep,
+                                                         uid=os.getuid(),
+                                                         gid=os.getgid()):
+                yield file_count
 
     # ------------------------------------------------------------------------------------------------------------------
     def do_canonical_scan(self):
@@ -195,7 +203,10 @@ class Session(object):
             Nothing.
         """
 
-        for file_count in self.canonical_scan.scan_directory(scan_dir=self.canonical_dir):
+        for file_count in self.canonical_scan.scan_directory(scan_dir=self.canonical_dir,
+                                                             root_p=self.canonical_dir,
+                                                             uid=os.getuid(),
+                                                             gid=os.getgid()):
             yield file_count
 
     # ------------------------------------------------------------------------------------------------------------------
