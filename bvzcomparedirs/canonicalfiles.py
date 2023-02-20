@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
-from . scanfiles import ScanFiles
+# from . scanfiles import ScanFiles
+from bvzscanfilesystem.scanfiles import ScanFiles
 
 
 class CanonicalFiles(ScanFiles):

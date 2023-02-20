@@ -3,8 +3,9 @@
 import os.path
 
 from . canonicalfiles import CanonicalFiles
-from . options import Options
-from . queryfiles import QueryFiles
+from bvzscanfilesystem.options import Options
+# from . queryfiles import QueryFiles
+from bvzscanfilesystem.scanfiles import ScanFiles
 
 from . import comparefiles
 
@@ -137,7 +138,7 @@ class Session(object):
                                     report_frequency=report_frequency)
 
         self.canonical_scan = CanonicalFiles(canonical_options)
-        self.query_scan = QueryFiles(query_options)
+        self.query_scan = ScanFiles(query_options)
 
         self.query_items = self._parameter_to_list(query_items)
         self.canonical_dir = canonical_dir
