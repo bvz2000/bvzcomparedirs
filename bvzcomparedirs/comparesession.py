@@ -150,6 +150,7 @@ class Session(object):
         self.source_error_files = set()
         self.possible_match_error_files = set()
 
+        self.checksum = dict()
         self.pre_computed_checksum_count = 0
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -177,6 +178,47 @@ class Session(object):
         return [param_value]
 
     # ------------------------------------------------------------------------------------------------------------------
+    def _store_checksum_in_cache(self,
+                                 file_p,
+                                 checksum):
+        """
+        Caches the checksum for the given file path in a dictionary.
+
+        :param file_p:
+            The path to the file for which we want to store the checksum.
+        :param checksum:
+            The checksum value to be cached
+
+        :return:
+            Nothing.
+        """
+
+        assert type(file_p) is str
+        assert type(checksum) is str
+
+        self.checksum[file_p] = checksum
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def _retrieve_checksum_from_cache(self,
+                                      file_p):
+        """
+        Tries to load the checksum from the checksum dictionary. If there is no checksum available, returns None.
+
+        :param file_p:
+            The path to the file for which we want to get the stored checksum.
+
+        :return:
+            The checksum that was stored. If there was no stored checksum, returns None.
+        """
+
+        assert type(file_p) is str
+
+        try:
+            return self.checksum[file_p]
+        except KeyError:
+            return None
+
+    # ------------------------------------------------------------------------------------------------------------------
     def do_query_scan(self):
         """
         Execute the query scan on the list of files and/or directories.
@@ -195,17 +237,12 @@ class Session(object):
                 files_p.append(query_item)
 
         if directories_p:
-            for file_count in self.query_scan.scan_directories(scan_dirs=directories_p,
-                                                               uid=os.getuid(),
-                                                               gid=os.getgid()):
+            for file_count in self.query_scan.scan_directories(scan_dirs=directories_p):
                 yield file_count
 
         # TODO: do a better job getting the root path
         if files_p:
-            for file_count in self.query_scan.scan_files(files_p=files_p,
-                                                         root_p=os.path.sep,
-                                                         uid=os.getuid(),
-                                                         gid=os.getgid()):
+            for file_count in self.query_scan.scan_files(files_p=files_p, root_p=os.path.sep):
                 yield file_count
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -217,15 +254,12 @@ class Session(object):
             Nothing.
         """
 
-        for file_count in self.canonical_scan.scan_directory(scan_dir=self.canonical_dir,
-                                                             root_p=self.canonical_dir,
-                                                             uid=os.getuid(),
-                                                             gid=os.getgid()):
+        for file_count in self.canonical_scan.scan_directories(scan_dirs=[self.canonical_dir]):
             yield file_count
 
     # ------------------------------------------------------------------------------------------------------------------
-    def add_unique(self,
-                   file_p):
+    def _add_unique(self,
+                    file_p):
         """
         Adds a file path to the list of unique files.
 
@@ -239,9 +273,9 @@ class Session(object):
         self.unique.add(file_p)
 
     # ------------------------------------------------------------------------------------------------------------------
-    def append_match(self,
-                     canonical_p,
-                     query_p):
+    def _append_match(self,
+                      canonical_p,
+                      query_p):
         """
         Appends the possible match to the list of actual matches.
 
@@ -342,7 +376,7 @@ class Session(object):
                                                                     mtime=mtime)
 
             if len(possible_matches) == 0:
-                self.add_unique(file_p)
+                self._add_unique(file_p)
                 continue
 
             match = False
@@ -356,10 +390,10 @@ class Session(object):
 
                 if skip_checksum:
                     match = True
-                    self.append_match(file_p, possible_match_p)
+                    self._append_match(file_p, possible_match_p)
                     continue
 
-                possible_match_checksum = self.canonical_scan.retrieve_checksum_from_cache(possible_match_p)
+                possible_match_checksum = self._retrieve_checksum_from_cache(possible_match_p)
 
                 if possible_match_checksum is not None:
                     self.pre_computed_checksum_count += 1
@@ -378,9 +412,9 @@ class Session(object):
 
                 if checksum:
                     match = True
-                    self.canonical_scan.store_checksum_in_cache(file_p=possible_match_p, checksum=checksum)
-                    self.append_match(file_p, possible_match_p)
+                    self._store_checksum_in_cache(file_p=possible_match_p, checksum=checksum)
+                    self._append_match(file_p, possible_match_p)
 
             if not match:
                 if not skip or (skip and len(possible_matches) > 1):
-                    self.add_unique(file_p)
+                    self._add_unique(file_p)
