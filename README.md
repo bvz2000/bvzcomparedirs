@@ -12,7 +12,7 @@ Specific files to be included in the comparison operation may be controlled by f
 
 Future features: 
 - Identify files that have the same name, but are unique.
-- Identify files in the canoncial directory that are missing from the query directory.
+- Identify files in the canonical directory that are missing from the query directory.
 - Cache md5 checksums for re-use between sessions.
 
 # Example Usage:
