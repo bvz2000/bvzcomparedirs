@@ -4,10 +4,9 @@ import os.path
 
 from . canonicalfiles import CanonicalFiles
 from bvzscanfilesystem.options import Options
-# from . queryfiles import QueryFiles
 from bvzscanfilesystem.scanfiles import ScanFiles
 
-from . import comparefiles
+import bvzcomparefiles.comparefiles as comparefiles
 
 
 class Session(object):
