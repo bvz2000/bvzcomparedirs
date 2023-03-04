@@ -97,7 +97,10 @@ class Session(object):
         """
 
         assert type(query_items) in [list, set, tuple, str]
+        for query_item in query_items:
+            assert(os.path.isabs(query_item))
         assert type(canonical_dir) is str
+        assert(os.path.isabs(canonical_dir))
         assert type(query_skip_sub_dir) is bool
         assert type(query_skip_hidden_files) is bool
         assert type(query_skip_hidden_dirs) is bool
@@ -400,8 +403,7 @@ class Session(object):
                 try:
                     checksum = comparefiles.compare(file_a_path=file_p,
                                                     file_b_path=possible_match_p,
-                                                    file_b_checksum=possible_match_checksum,
-                                                    single_pass=True)
+                                                    file_b_checksum=possible_match_checksum)
                 except AssertionError:
                     if not os.path.exists(file_p):
                         self.source_error_files.add(file_p)
